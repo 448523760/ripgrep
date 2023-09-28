@@ -18,7 +18,8 @@ impl RegexMatcher {
                 names.insert(name.to_string(), i);
             }
         }
-        RegexMatcher { re: re, names: names }
+        println!("regex matcher names: {:?}", &names);
+        RegexMatcher { re, names }
     }
 }
 

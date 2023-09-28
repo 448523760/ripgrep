@@ -76,6 +76,12 @@ fn shortest_match() {
     assert_eq!(matcher.re.shortest_match(b"aaa"), Some(1));
 }
 
+
+// (?P<a>\w+)：这是一个命名分组，使用的语法是(?P<name>pattern)。它匹配一个或多个字母数字字符（包括字母、数字和下划线），并将匹配的结果存储在名为a的组中。
+//
+// \s+：这是一个空白字符的匹配模式，匹配一个或多个空白字符（包括空格、制表符和换行符）。
+//
+// (?P<b>\w+)：这也是一个命名分组，它匹配一个或多个字母数字字符，并将匹配的结果存储在名为b的组中。
 #[test]
 fn captures() {
     let matcher = matcher(r"(?P<a>\w+)\s+(?P<b>\w+)");
@@ -85,7 +91,9 @@ fn captures() {
     assert_eq!(matcher.capture_index("nada"), None);
 
     let mut caps = matcher.new_captures().unwrap();
+    println!("before captures: {:?}", &caps);
     assert!(matcher.captures(b" homer simpson ", &mut caps).unwrap());
+    println!("after captures: {:?}", &caps);
     assert_eq!(caps.get(0), Some(m(1, 14)));
     assert_eq!(caps.get(1), Some(m(1, 6)));
     assert_eq!(caps.get(2), Some(m(7, 14)));
@@ -98,6 +106,7 @@ fn captures_iter() {
     let mut matches = vec![];
     matcher
         .captures_iter(b"aa bb cc dd", &mut caps, |caps| {
+            println!("inner process caps: {:?}", & caps);
             matches.push(caps.get(0).unwrap());
             matches.push(caps.get(1).unwrap());
             matches.push(caps.get(2).unwrap());

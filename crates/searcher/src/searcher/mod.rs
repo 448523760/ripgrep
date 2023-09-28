@@ -730,6 +730,7 @@ impl Searcher {
         let decoder = self
             .decode_builder
             .build_with_buffer(read_from, &mut *decode_buffer)
+            // .build_with_buffer(read_from, decode_buffer)
             .map_err(S::Error::error_io)?;
 
         if self.multi_line_with_matcher(&matcher) {

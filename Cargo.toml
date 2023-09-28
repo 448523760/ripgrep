@@ -83,7 +83,8 @@ simd-accel = ["grep/simd-accel"]
 pcre2 = ["grep/pcre2"]
 
 [profile.release]
-debug = 1
+#debug = 1
+lto = true
 
 [package.metadata.deb]
 features = ["pcre2"]
