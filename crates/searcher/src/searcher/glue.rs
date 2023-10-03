@@ -1,5 +1,6 @@
 use std::cmp;
 use std::io;
+use log::debug;
 
 use crate::line_buffer::{LineBufferReader, DEFAULT_BUFFER_CAPACITY};
 use crate::lines::{self, LineStep};
@@ -38,6 +39,7 @@ where
     }
 
     pub fn run(mut self) -> Result<(), S::Error> {
+        debug!("start to run");
         if self.core.begin()? {
             while self.fill()? && self.core.match_by_line(self.rdr.buffer())? {
             }

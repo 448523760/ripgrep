@@ -1290,7 +1290,7 @@ impl WalkParallel {
     builder: &mut dyn ParallelVisitorBuilder<'_>,
   ) {
     let threads = self.threads();
-    let mut stack = vec![];
+    let mut messages = vec![];
     {
       let mut visitor = builder.build();
       let mut paths = Vec::new().into_iter();
@@ -1326,36 +1326,64 @@ impl WalkParallel {
             }
           }
         };
-        stack.push(Message::Work(Work {
-          dent: dent,
+
+        // println!(
+        //   "thread[{:?}]: pushing work to stack {:?}",
+        //   thread::current(),
+        //   &dent
+        // );
+        messages.push(Message::Work(Work {
+          dent,
           ignore: self.ig_root.clone(),
-          root_device: root_device,
+          root_device,
         }));
       }
       // ... but there's no need to start workers if we don't need them.
-      if stack.is_empty() {
+      if messages.is_empty() {
         return;
       }
     }
+
     // Create the workers and then wait for them to finish.
     let quit_now = Arc::new(AtomicBool::new(false));
-    let num_pending = Arc::new(AtomicUsize::new(stack.len()));
-    let stacks = Stack::new_for_each_thread(threads, stack);
-    std::thread::scope(|s| {
+    let num_pending = Arc::new(AtomicUsize::new(messages.len()));
+
+    let stacks = Stack::new_for_each_thread(threads, messages);
+    // println!("map messages to stacks: {:?}", &stacks);
+
+    thread::scope(|s| {
       let handles: Vec<_> = stacks
         .into_iter()
-        .map(|stack| Worker {
-          visitor: builder.build(),
-          stack,
-          quit_now: quit_now.clone(),
-          num_pending: num_pending.clone(),
-          max_depth: self.max_depth,
-          max_filesize: self.max_filesize,
-          follow_links: self.follow_links,
-          skip: self.skip.clone(),
-          filter: self.filter.clone(),
+        .map(|stack| {
+          let worker = Worker {
+            visitor: builder.build(),
+            stack,
+            quit_now: quit_now.clone(),
+            num_pending: num_pending.clone(),
+            max_depth: self.max_depth,
+            max_filesize: self.max_filesize,
+            follow_links: self.follow_links,
+            skip: self.skip.clone(),
+            filter: self.filter.clone(),
+          };
+
+          // println!(
+          //   "thread[{:?}]: map stack to worker",
+          //   thread::current()
+          // );
+
+          return worker;
         })
-        .map(|worker| s.spawn(|| worker.run()))
+        .map(|worker| {
+          s.spawn(|| {
+            println!(
+              "thread[{:?}]: start to run with worker: {:?}",
+              thread::current(),
+              &worker.stack
+            );
+            worker.run()
+          })
+        })
         .collect();
       for handle in handles {
         handle.join().unwrap();
@@ -1562,6 +1590,12 @@ impl<'s> Worker<'s> {
   /// skipped by the ignore matcher.
   fn run(mut self) {
     while let Some(work) = self.get_work() {
+      println!(
+        "thread[{:?}]: got work: {:?}",
+        thread::current(),
+        &work.dent
+      );
+
       if let WalkState::Quit = self.run_one(work) {
         self.quit_now();
       }

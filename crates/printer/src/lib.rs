@@ -65,14 +65,19 @@ fn example() -> Result<(), Box<Error>> {
 #![deny(missing_docs)]
 
 pub use crate::color::{
-    default_color_specs, ColorError, ColorSpecs, UserColorSpec,
+  default_color_specs, ColorError, ColorSpecs, UserColorSpec,
 };
 #[cfg(feature = "serde1")]
 pub use crate::json::{JSONBuilder, JSONSink, JSON};
 pub use crate::standard::{Standard, StandardBuilder, StandardSink};
 pub use crate::stats::Stats;
-pub use crate::summary::{Summary, SummaryBuilder, SummaryKind, SummarySink};
+pub use crate::summary::{
+  Summary, SummaryBuilder, SummaryKind, SummarySink,
+};
 pub use crate::util::PrinterPath;
+
+use chrono::Local;
+use log::{Level, Metadata, Record};
 
 // The maximum number of bytes to execute a search to account for look-ahead.
 //
@@ -98,3 +103,44 @@ mod standard;
 mod stats;
 mod summary;
 mod util;
+
+struct CustomFormatter;
+
+impl log::Log for CustomFormatter {
+  fn enabled(&self, metadata: &Metadata) -> bool {
+    // Enable logging for all levels
+    metadata.level() <= Level::max()
+  }
+
+  fn log(&self, record: &Record) {
+    if self.enabled(record.metadata()) {
+      let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+      let level = record.level();
+
+      let current_thread = std::thread::current();
+      let thread_name = current_thread.name().unwrap_or("main");
+
+      let module_path = record.module_path().unwrap_or("<unknown>");
+
+      let line = record.line().unwrap_or(0);
+
+      // Format the log message
+      let log_msg = format!(
+        "[{}][{}][{}][{}:{}] > {}",
+        timestamp,
+        level,
+        thread_name,
+        module_path,
+        line,
+        record.args()
+      );
+
+      // Write the log message to stdout
+      // let mut stdout = io::stdout();
+      // writeln!(&mut stdout, "{}", log_msg).expect("Failed to write log");
+      println!("{}", &log_msg);
+    }
+  }
+
+  fn flush(&self) {}
+}

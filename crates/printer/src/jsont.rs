@@ -15,7 +15,7 @@ use serde::{Serialize, Serializer};
 
 use crate::stats::Stats;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(tag = "type", content = "data")]
 #[serde(rename_all = "snake_case")]
 pub enum Message<'a> {
@@ -25,13 +25,13 @@ pub enum Message<'a> {
     Context(Context<'a>),
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Begin<'a> {
     #[serde(serialize_with = "ser_path")]
     pub path: Option<&'a Path>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct End<'a> {
     #[serde(serialize_with = "ser_path")]
     pub path: Option<&'a Path>,
@@ -39,7 +39,7 @@ pub struct End<'a> {
     pub stats: Stats,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Match<'a> {
     #[serde(serialize_with = "ser_path")]
     pub path: Option<&'a Path>,
@@ -50,7 +50,7 @@ pub struct Match<'a> {
     pub submatches: &'a [SubMatch<'a>],
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Context<'a> {
     #[serde(serialize_with = "ser_path")]
     pub path: Option<&'a Path>,
@@ -61,7 +61,7 @@ pub struct Context<'a> {
     pub submatches: &'a [SubMatch<'a>],
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct SubMatch<'a> {
     #[serde(rename = "match")]
     #[serde(serialize_with = "ser_bytes")]

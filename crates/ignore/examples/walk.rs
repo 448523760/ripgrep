@@ -18,7 +18,7 @@ fn main() {
   //     simple = true;
   // }
 
-  let path = "./crates";
+  let path = "./crates/ignore";
   let parallel = true;
   let simple = false;
 
@@ -27,11 +27,11 @@ fn main() {
   let stdout_thread = thread::spawn(move || {
     let mut stdout = io::BufWriter::new(io::stdout());
     for dent in receiver {
-      println!(
-        "thread[{:?}]: got dent from rx > {:?}",
-        thread::current(),
-        dent
-      );
+      // println!(
+      //   "thread[{:?}]: got dent from rx > {:?}",
+      //   thread::current(),
+      //   dent
+      // );
       write_path(&mut stdout, dent.path_ref());
       // stdout.flush();
     }
@@ -42,15 +42,15 @@ fn main() {
     let walker = WalkBuilder::new(path).threads(8).build_parallel();
     walker.run(|| {
       let tx = sender.clone();
-      let v = Box::new(move |result| {
+      let v = Box::new(move |result: Result<ignore::DirEntry, _>| {
         use ignore::WalkState::*;
 
         let dir = result.unwrap();
-        println!(
-          "thread[{:?}]: parallel send dir from tx > {:?}",
-          thread::current(),
-          dir
-        );
+        // println!(
+        //   "thread[{:?}]: parallel send dir from tx > {:?}",
+        //   thread::current(),
+        //   dir
+        // );
         tx.send(DirEntry::Y(dir)).unwrap();
         Continue
       });
